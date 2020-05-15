@@ -1,0 +1,7 @@
+2020-01-10 23:50:21,786 - BROWSER EXPERIMENT STREAM ID 0 - INFO - Starting the server located at ./src/video_server/rl_server_no_training.py
+2020-01-10 23:50:21,788 - BROWSER EXPERIMENT STREAM ID 0 - INFO - Options have been added to chrome driver
+2020-01-10 23:50:24,309 - BROWSER EXPERIMENT STREAM ID 0 - INFO - Chrome driver started
+2020-01-10 23:50:24,309 - BROWSER EXPERIMENT STREAM ID 0 - INFO - Waiting for video to end
+2020-01-10 23:53:11,672 - BROWSER EXPERIMENT STREAM ID 0 - INFO - Video ended
+2020-01-10 23:53:11,728 - BROWSER EXPERIMENT STREAM ID 0 - INFO - Driver quitted
+2020-01-10 23:53:11,729 - BROWSER EXPERIMENT STREAM ID 0 - INFO - Sending SIGINT to the video server

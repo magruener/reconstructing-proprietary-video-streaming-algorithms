@@ -1,0 +1,2 @@
+,bandwidth_mbit,bitrate_level,body_size_byte,byte_end,byte_start,n_segment,quality_level_chosen,seg_len_s,t_download_s,t_end,t_start,timestamp_finish,timestamp_start,url,vmaf_level,bitrate_level_encoded
+0,0.16065255389395994,620400.0,310200,0,0,0,1,4.0,15.447000000000001,4.0,0.0,1572030992.549,1572030977.035,https://videos-fms.jwpsrv.com/content/conversions/cGlKNUnj/videos/c04tpAHH-30813211.mp4-1.ts,29.372622459016398,449420.2605042017

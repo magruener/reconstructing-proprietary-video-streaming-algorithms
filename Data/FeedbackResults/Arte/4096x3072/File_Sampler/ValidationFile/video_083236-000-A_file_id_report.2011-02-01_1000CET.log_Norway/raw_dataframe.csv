@@ -1,0 +1,2 @@
+,url,timestamp_start,timestamp_finish,n_segment,t_download_s,body_size_byte,bandwidth_mbit,byte_start,byte_end,seg_len_s,t_start,t_end,quality_level_chosen,bitrate_level,vmaf_level
+0,https://arteptweb-vh.akamaihd.net/i/am/ptweb/083000/083200/083236-000-A_0_VO-STE%5BANG%5D_AMM-PTWEB_XQ.z0MmlinfU.smil/segment1_3_av.ts,1576488621.437,1576488677.3830001,0,55.613,644276,0.09267991296998902,0,0,10.080333,0.0,10.08,0,515146.0,26.85468803149605

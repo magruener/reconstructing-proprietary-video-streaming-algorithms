@@ -1,0 +1,3 @@
+,bandwidth_mbit,bitrate_level,body_size_byte,byte_end,byte_start,n_segment,quality_level_chosen,seg_len_s,t_download_s,t_end,t_start,timestamp_finish,timestamp_start,url,vmaf_level,bitrate_level_encoded
+0,0.13404358353510895,639816.0,325240,0,0,0,4,4.0,19.411,4.0,0.0,1572052178.897,1572052146.204,https://videos-a.jwpsrv.com/content/conversions/cGlKNUnj/videos/JQg6KiV2-30813216.mp4-1.ts,100.0,2112374.5454545454
+1,0.1006596657299216,668387.0,340280,0,0,1,3,4.006178,27.044,8.01,4.0,1572052221.985,1572052193.115,https://videos-a.jwpsrv.com/content/conversions/cGlKNUnj/videos/JQg6KiV2-30813213.mp4-2.ts,89.99873575000002,1037381.494949495
