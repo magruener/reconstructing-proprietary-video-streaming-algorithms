@@ -17,7 +17,6 @@ from sklearn.base import RegressorMixin, TransformerMixin, ClassifierMixin
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_X_y, check_array
 
-
 """
 Modified code directly from the gplean library (gplearn) https://gplearn.readthedocs.io/en/stable/intro.html
 """

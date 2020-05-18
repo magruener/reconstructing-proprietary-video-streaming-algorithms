@@ -5,13 +5,12 @@ from random import choice
 from typing import Dict
 
 import numpy as np
+import pandas as pd
 from keras.callbacks import EarlyStopping
 from scipy.stats import entropy
 from sklearn import metrics
 from sklearn.ensemble import IsolationForest
 from tqdm import tqdm
-
-import pandas as pd
 
 LOGGING_LEVEL = logging.INFO
 handler = logging.StreamHandler()
@@ -22,7 +21,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(LOGGING_LEVEL)
 logger.addHandler(handler)
 
-N_BINS_DIST = 15
+N_BINS_DIST = 15 ## KL divergence between clustering scores how many bins do we use to estimate the probability distribution
 
 
 class ABRPolicyClusteringFunctionLearner:

@@ -1,19 +1,15 @@
 import logging
 import os
 
+import dill
 import numpy as np
-from scipy.spatial.distance import cdist
+from sklearn.model_selection import train_test_split
 from sklearn.utils import class_weight
 from tensorflow.keras import backend as K, Input, Model
 from tensorflow.keras.layers import GRU, Dense, concatenate
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import to_categorical
-from scipy.stats import entropy
-
-from sklearn import metrics
-from sklearn.model_selection import train_test_split
 from tqdm import tqdm
-import dill
 
 from ABRPolicies.ABRPolicy import ABRPolicy
 from BehaviourCloning.ActionCloning import KerasPolicy

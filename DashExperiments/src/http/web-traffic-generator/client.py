@@ -1,10 +1,6 @@
-from socket import *
-import time
-import random
-import sys
-import os
 import argparse
-
+import time
+from socket import *
 
 # parse arguments
 parser = argparse.ArgumentParser()

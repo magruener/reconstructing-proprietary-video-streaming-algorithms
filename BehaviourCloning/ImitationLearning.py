@@ -5,9 +5,6 @@ from abc import abstractmethod
 import dill
 import numpy as np
 import pandas as pd
-from scipy.spatial.distance import cdist
-from scipy.stats import entropy
-from sklearn import metrics
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm

@@ -13,21 +13,18 @@ import os
 import dill
 import numpy as np
 import pandas as pd
-from scipy.spatial.distance import cdist
-from scipy.stats import entropy
 from sklearn.ensemble import IsolationForest
+from sklearn.model_selection import train_test_split
+from sklearn.utils import class_weight
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import GRU, concatenate, Dense
 from tensorflow.keras.utils import to_categorical
-from sklearn import metrics
-from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 from xgboost import XGBRegressor
 
 from ABRPolicies.ABRPolicy import ABRPolicy
 from BehaviourCloning.MLABRPolicy import ABRPolicyLearner, ABRPolicyValueFunctionLearner
 from SimulationEnviroment.SimulatorEnviroment import TrajectoryVideoStreaming, Trajectory
-from sklearn.utils import class_weight
 
 LOGGING_LEVEL = logging.DEBUG
 handler = logging.StreamHandler()

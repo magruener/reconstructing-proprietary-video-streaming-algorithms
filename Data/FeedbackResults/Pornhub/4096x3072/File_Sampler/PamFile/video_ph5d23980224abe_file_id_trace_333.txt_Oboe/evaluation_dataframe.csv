@@ -1,0 +1,3 @@
+,timestamp_finish,bitrate_level_encoded,bitrate_level,vmaf_level,buffer_level_at_timestamp_finish,rebuffer_level_at_timestamp_finish,body_size_byte,seg_len_s,t_download_s,quality_level_chosen,played_at_beginning,played_at_end,reward
+0,1572089656.8920002,477311.2376237624,291318.0,39.52904785123969,0.0,,111672.0,3.07,9.435,0.0,,0.0,
+1,1572089670.7729998,477311.2376237624,485909.0,21.625058595041327,0.9982779999999991,13.880999565124512,367352.0,6.049999999999999,13.775,0.0,0.0,8.01104,
