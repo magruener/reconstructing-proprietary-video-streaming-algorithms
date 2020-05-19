@@ -24,16 +24,13 @@ logger.setLevel(LOGGING_LEVEL)
 logger.addHandler(handler)
 
 
-
-
-
 class ABRCloner(ABRPolicy):
 
     def __init__(self, abr_name, max_quality_change, deterministic, training_epochs,
                  abr_policy_learner: ABRPolicyLearner, value_function_learner: ABRPolicyValueFunctionLearner,
                  validation_split=0.2, future_reward_discount=0.99, random_action_probability_init=.9,
                  cores_avail=1, min_random_action_probability=0.05, exploration_percentage=0.25,
-                 weight_samples_method = 'Viper'):
+                 weight_samples_method='Viper'):
         """
         Base class for imitation learner implemented below
         :param abr_name:
@@ -52,8 +49,8 @@ class ABRCloner(ABRPolicy):
         VIPER : Weigh action by difference in reward you gain from choosing this action and the worst action
         Divergence : Weight action by difference in reward you gain from choosing the best action and the worst action in this situation.
         """
-        self.valid_weight_samples_method = ['Divergence','Viper']
-        assert weight_samples_method in self.valid_weight_samples_method,'Choose correct sampling method in %s' % self.valid_weight_samples_method
+        self.valid_weight_samples_method = ['Divergence', 'Viper']
+        assert weight_samples_method in self.valid_weight_samples_method, 'Choose correct sampling method in %s' % self.valid_weight_samples_method
         self.weight_samples_method = weight_samples_method
         super().__init__(abr_name, max_quality_change, deterministic)
         self.cores_avail = cores_avail
@@ -68,9 +65,10 @@ class ABRCloner(ABRPolicy):
         self.random_action_probability_init = random_action_probability_init
         self.policy_history = {}
         self.min_random_action_probability = min_random_action_probability
-        self.random_action_probability_decay = (self.min_random_action_probability / self.random_action_probability_init) ** (
-                                                           1. / int(
-                                                       training_epochs * exploration_percentage))
+        self.random_action_probability_decay = (
+                                                           self.min_random_action_probability / self.random_action_probability_init) ** (
+                                                       1. / int(
+                                                   training_epochs * exploration_percentage))
         self.exploration_percentage = exploration_percentage
 
     def next_quality(self, observation, reward):
@@ -89,7 +87,7 @@ class ABRCloner(ABRPolicy):
         transformed_observations = pd.DataFrame(transformed_observations,
                                                 columns=self.value_function_learner.extract_features_names())
         self.anomaly_scorer.fit(transformed_observations)
-        ################################33
+        ################################
         ### self.anomaly_scorer.score_samples(self,X) Opposite of the anomaly score defined in the original paper.
         ### The lower, the more abnormal. Negative scores represent outliers, positive scores represent inliers.
         anomaly_score = self.anomaly_scorer.score_samples(transformed_observations)
@@ -109,7 +107,7 @@ class ABRCloner(ABRPolicy):
         self.value_function_learner.fit(transformed_observations, transformed_reward.reshape(-1, 1))
         return self.value_function_learner
 
-    def estimate_advantage(self, previous_observation, streaming_enviroment,proposed_action_idx):
+    def estimate_advantage(self, previous_observation, streaming_enviroment, proposed_action_idx):
         last_level = previous_observation['current_level'][-1]
         quality_choices = np.arange(last_level - self.max_quality_change, last_level + self.max_quality_change + 1)
         # Limit the choices to possible quality shifts
@@ -136,8 +134,9 @@ class ABRCloner(ABRPolicy):
         # advantage = reward_list[proposed_action_idx] - np.mean(reward_list) ### v4 (MY STUFF)
         advantage = advantage.flatten()[0]
         return max(advantage, 0)
+
     def clone_from_expert(self, expert_algorithm: ABRPolicy, streaming_enviroment, trace_list,
-                          video_csv_list,expert_trajectory,show_progress=False, log_steps=False):
+                          video_csv_list, expert_trajectory, show_progress=False, log_steps=False):
 
         self.policy_history = {}
         trace_list = np.array(trace_list)
@@ -175,7 +174,7 @@ class ABRCloner(ABRPolicy):
             video_finished = False
             action_idx = 2
             while not video_finished:
-                advantage = self.estimate_advantage(previous_observation, streaming_enviroment,action_idx)
+                advantage = self.estimate_advantage(previous_observation, streaming_enviroment, action_idx)
                 observation, reward, video_finished, info = streaming_enviroment.get_video_chunk(
                     current_quality)
                 switch = current_quality_expert - previous_quality
@@ -215,7 +214,7 @@ class ABRCloner(ABRPolicy):
                                                                          expert_trajectory_validation,
                                                                          streaming_enviroment,
                                                                          trace_list[test_idx],
-                                                                         video_csv_list[test_idx],add_data = False)
+                                                                         video_csv_list[test_idx], add_data=False)
             for k, v in scoring_history.items():
                 if k in self.policy_history:
                     self.policy_history[k] += scoring_history[k]
@@ -281,13 +280,14 @@ class ABRCloner(ABRPolicy):
                                      approx_trajectory=behavioural_cloning_evaluation_trajectory,
                                      approx_action=approx_action, add_data=add_data)
 
+
 class VIPERCloner(ABRCloner):
 
     def __init__(self, abr_name, max_quality_change, deterministic, training_epochs,
                  abr_policy_learner: ABRPolicyLearner, value_function_learner: ABRPolicyValueFunctionLearner,
                  validation_split=0.2, future_reward_discount=0.99, random_action_probability_init=.9, cores_avail=1,
                  min_random_action_probability=0.05, exploration_percentage=0.5, n_training_samples=3000,
-                 weight_samples_method = 'Viper'):
+                 weight_samples_method='Viper'):
         """
         Implementation of the VIPER imitation policy proposed in https://papers.nips.cc/paper/7516-verifiable-reinforcement-learning-via-policy-extraction
         :param abr_name:
@@ -308,7 +308,7 @@ class VIPERCloner(ABRCloner):
         super().__init__(abr_name, max_quality_change, deterministic, training_epochs, abr_policy_learner,
                          value_function_learner, validation_split, future_reward_discount,
                          random_action_probability_init, cores_avail, min_random_action_probability,
-                         exploration_percentage,weight_samples_method = weight_samples_method)
+                         exploration_percentage, weight_samples_method=weight_samples_method)
         self.n_training_samples = n_training_samples
 
     def copy(self):

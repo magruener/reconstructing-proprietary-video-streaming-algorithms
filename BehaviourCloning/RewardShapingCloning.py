@@ -175,7 +175,6 @@ class KerasEmbedder:
 class RandomExpertDistillation(ABRPolicy):
     """
     Implementation from https://arxiv.org/pdf/1905.06750.pdf RED which was a poster at ICML2019
-
     Current work in Off-policy learning is not advantageous to us because we do not have the reward function
     """
 
@@ -479,7 +478,8 @@ class RandomExpertDistillation(ABRPolicy):
                                                                                video_csv_list=video_csv_list)
         state_t_testing = expert_trajectory.trajectory_state_t_arr
         state_t_future_testing = expert_trajectory.trajectory_state_t_future
-        approx_action = self.policy_network.policy_model.model.predict([state_t_testing, state_t_future_testing]).argmax(-1)
+        approx_action = self.policy_network.policy_model.model.predict(
+            [state_t_testing, state_t_future_testing]).argmax(-1)
         expert_action = expert_trajectory.trajectory_action_t_arr
 
         behavioural_cloning_evaluation, behavioural_cloning_evaluation_trajectory = behavioural_cloning_trace_generator_testing.create_trajectories(
@@ -492,317 +492,6 @@ class RandomExpertDistillation(ABRPolicy):
                                      approx_action=approx_action, add_data=add_data)
 
 
-
-class KerasGAILDIFF:
-
-    def __init__(self,
-                 past_measurement_dimensions,
-                 future_measurements_dimensions,
-                 hidden_dim,
-                 action_dimension,
-                 drop_prob=0.2):
-        """
-        https://arxiv.org/abs/1606.03476
-        :param past_measurement_dimensions:
-        :param future_measurements_dimensions:
-        :param hidden_dim:
-        :param action_dimension:
-        :param drop_prob:
-        """
-        self.discriminator_model = KerasDiscriminator(past_measurement_dimensions,
-                                                      future_measurements_dimensions,
-                                                      hidden_dim,
-                                                      action_dimension,
-                                                      drop_prob=drop_prob)
-
-        self.policy_model = KerasPolicy(past_measurement_dimensions,
-                                        future_measurements_dimensions,
-                                        hidden_dim,
-                                        action_dimension,
-                                        drop_prob=drop_prob)
-        # ---------------------------------------------------------------------------------------------------------------------------------
-        # Build GAIL Model
-        self.discriminator_model.discriminator_past_GRU.trainable = False
-        self.discriminator_model.discriminator_future_GRU.trainable = False
-        self.discriminator_model.discriminator_dense_1.trainable = False
-        self.discriminator_model.discriminator_dense_2.trainable = False
-        self.discriminator_model.discriminator_dense_final.trainable = False
-
-        concatenated = concatenate(
-            [self.discriminator_model.discriminator_past_GRU(self.policy_model.policy_past_input),
-             self.discriminator_model.discriminator_future_GRU(
-                 self.policy_model.policy_future_input)])
-        concatenated = self.discriminator_model.discriminator_dense_1(concatenated)
-        concatenated = concatenate([concatenated, self.policy_model.policy_action_output])
-        concatenated = self.discriminator_model.discriminator_dense_2(concatenated)
-        gail_likelihood = self.discriminator_model.discriminator_dense_final(concatenated)
-        self.gail_model = Model(inputs=[self.policy_model.policy_past_input, self.policy_model.policy_future_input],
-                                outputs=gail_likelihood)
-        self.gail_model.compile(loss="categorical_crossentropy", optimizer='adam')
-        self.discriminator_model = self.discriminator_model.model
-        self.policy_model = self.policy_model.model
-
-
-class GAILDifferentiable(ABRPolicy):
-
-    def __init__(self, abr_name, max_quality_change, deterministic, past_measurement_dimension,
-                 future_measurements_dimensions, cloning_epochs, drop_prob=0.1,
-                 hidden_dim=32, batch_size_cloning=64, validation_split=0.2, pretrain=False, pretrain_max_epochs=20,
-                 random_action_probability=0.9, random_action_probability_decay=0.75, adverserial_max_epochs=20,
-                 cores_avail=1, balanced=False):
-        """
-        :type validation_split: object
-        :param abr_name:
-        :param max_quality_change:
-        :param deterministic:
-        :param lookback:
-        """
-        super().__init__(abr_name, max_quality_change, deterministic)
-        self.cores_avail = cores_avail
-        self.random_action_probability_decay = random_action_probability_decay
-        self.random_action_probability = random_action_probability
-        self.pretrain = pretrain
-        self.past_measurement_dimension = past_measurement_dimension
-        self.future_measurements_dimensions = future_measurements_dimensions
-
-        self.n_actions = max_quality_change * 2 + 1
-        self.hidden_dim = hidden_dim
-        self.drop_prob = drop_prob
-        self.gail_network = KerasGAILDIFF(past_measurement_dimensions=self.past_measurement_dimension,
-                                          future_measurements_dimensions=self.future_measurements_dimensions,
-                                          hidden_dim=hidden_dim,
-                                          action_dimension=self.n_actions,
-                                          drop_prob=drop_prob)
-        self.pretrain_history = None
-        self.discriminator_history = None
-        self.value_history = None
-        self.policy_history = None
-
-        self.pretrain_history_last = None
-        self.discriminator_history_last = None
-        self.value_history_last = None
-        self.policy_history_last = None
-
-        self.pretrain_max_epochs = pretrain_max_epochs
-
-        self.batch_size_cloning = batch_size_cloning
-        self.cloning_epochs = cloning_epochs
-        self.trajectory_dummy = Trajectory()
-        self.validation_split = validation_split
-        self.adverserial_max_epochs = adverserial_max_epochs
-        self.balanced = balanced
-
-    def copy(self):
-        copy_ = GAILDifferentiable(self.abr_name, self.max_quality_change, self.deterministic,
-                                   self.past_measurement_dimension,
-                                   self.future_measurements_dimensions, self.cloning_epochs, self.drop_prob,
-                                   self.hidden_dim, self.batch_size_cloning, self.validation_split, self.pretrain,
-                                   self.pretrain_max_epochs,
-                                   self.random_action_probability, self.random_action_probability_decay,
-                                   self.adverserial_max_epochs, self.cores_avail)
-
-        tmp_file_name = self.randomString(self.rnd_string_length) + 'tmp_id'
-        self.gail_network.gail_model.save_weights(filepath=tmp_file_name)
-        copy_.gail_network.gail_model.load_weights(tmp_file_name)
-        os.remove(tmp_file_name)
-        return copy_
-
-    def reset_learning(self):
-        self.pretrain_history = None
-        self.discriminator_history = None
-        self.value_history = None
-        self.policy_history = None
-
-        self.pretrain_history_last = None
-        self.discriminator_history_last = None
-        self.value_history_last = None
-        self.policy_history_last = None
-
-        self.gail_network = KerasGAILDIFF(past_measurement_dimensions=self.past_measurement_dimension,
-                                          future_measurements_dimensions=self.future_measurements_dimensions,
-                                          hidden_dim=self.hidden_dim,
-                                          action_dimension=self.n_actions,
-                                          drop_prob=self.drop_prob)
-
-    def next_quality(self, observation, reward):
-        current_level = observation['current_level'][-1]
-        streaming_enviroment = observation['streaming_environment']
-        observation = self.trajectory_dummy.scale_observation(
-            observation)  # This is important as the learned representation is also scaled
-        state_t = [v for k, v in sorted(
-            observation.items()) if 'streaming_environment' != k and 'future' not in k]
-        state_t = np.array(state_t).T
-        state_t = np.expand_dims(state_t, axis=0)
-
-        state_t_future = [v for k, v in sorted(
-            observation.items()) if 'streaming_environment' != k and 'future' in k]
-        state_t_future = np.array(state_t_future).T
-        state_t_future = np.expand_dims(state_t_future, axis=0)
-
-        action_prob = self.gail_network.policy_model.predict([state_t, state_t_future])
-        self.likelihood_last_decision_val = max(action_prob)
-        if self.deterministic:
-            next_quality_switch_idx = np.argmax(action_prob)
-        else:
-            probability = action_prob.flatten()
-            next_quality_switch_idx = np.random.choice(np.arange(len(probability)), size=1, p=probability)
-        next_quality = np.clip(current_level + self.quality_change_arr[next_quality_switch_idx], a_min=0,
-                               a_max=streaming_enviroment.max_quality_level)
-        return next_quality
-
-    def likelihood_last_decision(self):
-        return self.likelihood_last_decision_val
-
-    def reset(self):
-        pass
-
-    def split_input_data(self, expert_evaluation, expert_trajectory):
-        train_idx, test_test2_idx = train_test_split(np.arange(len(expert_evaluation)),
-                                                     test_size=self.validation_split * 2.)
-        test_idx, test2_idx = train_test_split(test_test2_idx, test_size=self.validation_split)
-
-        state_train_idx = np.array(
-            [expert_trajectory.trajectory_sample_association[expert_evaluation[idx].name] for idx in
-             train_idx]).flatten()
-        state_test_idx = np.array(
-            [expert_trajectory.trajectory_sample_association[expert_evaluation[idx].name] for idx in
-             test_idx]).flatten()
-        return train_idx, test_idx, test2_idx, state_train_idx, state_test_idx
-
-    def calculate_reference_reward(self, expert_evaluation, test_idx):
-        return [frame.reward.mean() for frame in [expert_evaluation[i].streaming_session_evaluation for i in test_idx]]
-
-    def clone_from_trajectory(self, expert_evaluation, expert_trajectory: Trajectory, streaming_enviroment,
-                              trace_list,
-                              video_csv_list, log_steps=False):
-        self.reset_learning()
-        self.fit_clustering_scorer(expert_trajectory)
-
-        # Select the training/validation traces
-        trace_list = np.array(trace_list)
-        video_csv_list = np.array(video_csv_list)
-        expert_trajectory.convert_list()
-        train_idx, test_idx, test2_idx, state_train_idx, state_test_idx = self.split_input_data(expert_evaluation,
-                                                                                                expert_trajectory)
-        state_t_expert = expert_trajectory.trajectory_state_t_arr
-        state_t_future_expert = expert_trajectory.trajectory_state_t_future
-        expert_action = expert_trajectory.trajectory_action_t_arr
-        expert_action = to_categorical(expert_action, num_classes=self.n_actions)
-        behavioural_cloning_trace_generator_testing = TrajectoryVideoStreaming(self, streaming_enviroment,
-                                                                               trace_list=trace_list[test2_idx],
-                                                                               video_csv_list=video_csv_list[test2_idx])
-        behavioural_cloning_trace_generator_training = TrajectoryVideoStreaming(self, streaming_enviroment,
-                                                                                trace_list=trace_list[train_idx],
-                                                                                video_csv_list=video_csv_list[
-                                                                                    train_idx])
-
-        mean_reward_expert_run_test = self.calculate_reference_reward(expert_evaluation, test2_idx)
-        validation_data = (
-            [state_t_expert[state_test_idx], state_t_future_expert[state_test_idx]], expert_action[state_test_idx])
-
-        keras_class_weighting = None
-        if self.balanced :
-            keras_class_weighting = class_weight.compute_class_weight('balanced',
-                                                                  np.unique(expert_action[state_train_idx].argmax(1)),
-                                                                  expert_action[state_train_idx].argmax(1))
-
-
-        if self.pretrain:
-            history = self.gail_network.policy_model.fit(
-                [state_t_expert[state_train_idx], state_t_future_expert[state_train_idx]],
-                expert_action[state_train_idx],
-                validation_data=validation_data, epochs=self.pretrain_max_epochs, verbose=0,
-                shuffle=True,
-                callbacks=self.early_stopping,
-                class_weight=keras_class_weighting).history
-            self.pretrain_history_last = history.copy()
-            self.pretrain_history = self.keep_last_entry(history)
-
-        current_random_action_probability = self.random_action_probability
-        weight_filepaths = []
-        for cloning_iteration in tqdm(range(self.cloning_epochs), desc='Cloning Epochs'):
-            # --------------------------------------------------------------------------------------------------
-            # Train Discriminator
-            _, behavioural_cloning_trajectory = behavioural_cloning_trace_generator_training.create_trajectories(
-                random_action_probability=0)
-            state_t, state_t_future, state_t1, state_t1_future, approximation_actions = behavioural_cloning_trajectory.sample(
-                behavioural_cloning_trajectory.n_trajectories)
-            train_idx_clone, test_idx_clone = train_test_split(np.arange(len(state_t)), test_size=self.validation_split)
-
-            approximation_actions = to_categorical(approximation_actions, num_classes=self.n_actions)
-
-            state_t_train = np.vstack([state_t[train_idx_clone], state_t_expert[state_train_idx]])
-            state_t_future_train = np.vstack([state_t_future[train_idx_clone], state_t_future_expert[state_train_idx]])
-            action_train = np.vstack([approximation_actions[train_idx_clone], expert_action[state_train_idx]])
-            target_label_train = to_categorical(np.vstack([0] * len(train_idx_clone) + [1] * len(state_train_idx)),
-                                                num_classes=2)
-
-            state_t_validation = np.vstack([state_t[test_idx_clone], state_t_expert[state_test_idx]])
-            state_t_future_validation = np.vstack(
-                [state_t_future[test_idx_clone], state_t_future_expert[state_test_idx]])
-            action_validation = np.vstack([approximation_actions[test_idx_clone], expert_action[state_test_idx]])
-            target_label_validation = to_categorical(np.vstack([0] * len(test_idx_clone) + [1] * len(state_test_idx)),
-                                                     num_classes=2)
-
-            validation_data_discriminator = (
-                [state_t_validation, state_t_future_validation, action_validation], target_label_validation)
-
-            data_train = [state_t_train, state_t_future_train, action_train]
-
-            history = self.gail_network.discriminator_model.fit(data_train, target_label_train,
-                                                                validation_data=validation_data_discriminator,
-                                                                epochs=self.adverserial_max_epochs,
-                                                                verbose=0, callbacks=self.early_stopping).history
-            self.discriminator_history_last = history.copy()
-            history = self.keep_last_entry(history)
-
-            if self.discriminator_history is None:
-                self.discriminator_history = history
-            else:
-                for k, v in history.items():
-                    self.discriminator_history[k] += history[k]
-
-            # Train the policy to fool the the discriminator
-            fooling_label = to_categorical([1] * len(state_t), num_classes=2)
-            history = self.gail_network.gail_model.fit([state_t, state_t_future], fooling_label,
-                                                       validation_split=self.validation_split,
-                                                       epochs=self.adverserial_max_epochs,
-                                                       verbose=0, callbacks=self.early_stopping).history
-            self.policy_history_last = history.copy()
-            history = self.keep_last_entry(history)
-
-            if self.policy_history is None:
-                self.policy_history = history
-                self.policy_history['enviroment_reward_approximation'] = []
-                self.policy_history['enviroment_reward_expert'] = []
-                self.policy_history['enviroment_reward_difference'] = []
-            else:
-                for k, v in history.items():
-                    self.policy_history[k] += history[k]
-            behavioural_cloning_evaluation, _ = behavioural_cloning_trace_generator_testing.create_trajectories(
-                random_action_probability=0)
-            clone_list = [frame.reward.mean() for frame in behavioural_cloning_evaluation]
-            reward_difference = np.mean(clone_list) - np.mean(mean_reward_expert_run_test)
-            self.policy_history['enviroment_reward_approximation'] += [np.mean(clone_list)]
-            self.policy_history['enviroment_reward_expert'] += [np.mean(mean_reward_expert_run_test)]
-            self.policy_history['enviroment_reward_difference'] += [reward_difference]
-            current_random_action_probability *= self.random_action_probability_decay
-            weight_filepath = self.rnd_id + '_policy_network_iteration_%d.h5' % cloning_iteration
-            self.gail_network.gail_model.save_weights(filepath=weight_filepath)
-            weight_filepaths.append(weight_filepath)
-        best_iteration = self.opt_policy_opt_operator(self.policy_history[self.opt_policy_value_name])
-        self.gail_network.gail_model.load_weights(weight_filepaths[best_iteration])
-        logger.info('Restoring best iteration %d' % best_iteration)
-        for path in weight_filepaths:
-            os.remove(path)
-
-    def save_model(self, weight_filepath):
-        self.gail_network.gail_model.save_weights(filepath=weight_filepath)
-
-    def load_model(self, weight_filepath):
-        self.gail_network.gail_model.load_weights(weight_filepath)
-
-
 class GAILPPO(ABRPolicy):
     def __init__(self, abr_name, max_quality_change, deterministic,
                  past_measurement_dimensions,
@@ -812,11 +501,24 @@ class GAILPPO(ABRPolicy):
                  adverserial_max_epochs=20, cores_avail=1, balanced=False):
         """
         https://arxiv.org/abs/1606.03476 with PPO as reward learning function
-        :type validation_split: object
         :param abr_name:
         :param max_quality_change:
-        :param deterministic:
-        :param lookback:
+        :param deterministic: Distribution over actions or take the best action proposed
+        :param past_measurement_dimensions: how many past measurements do we consider
+        :param future_measurements_dimensions: how many future measurements do we consider
+        :param cloning_epochs:
+        :param drop_prob:
+        :param hidden_dim:
+        :param batch_size_cloning:
+        :param validation_split:
+        :param pretrain: Behavioral cloning before we start training the network
+        :param pretrain_max_epochs:  How many epochs do we pretrain
+        :param random_action_probability: Exploration probability
+        :param random_action_probability_decay:  Exploration probability decay
+        :param future_reward_discount: gamma in the reward function
+        :param adverserial_max_epochs: How many epochs do we run one training for a cloning epoch
+        :param cores_avail:
+        :param balanced: Do we balance for the actions
         """
         super().__init__(abr_name, max_quality_change, deterministic)
         self.cores_avail = cores_avail
@@ -1001,7 +703,7 @@ class GAILPPO(ABRPolicy):
                 action_training,
                 validation_data=([state_t_testing, state_t_future_testing], action_testing),
                 epochs=self.pretrain_max_epochs, verbose=0,
-                callbacks=self.early_stopping,class_weight = keras_class_weighting).history
+                callbacks=self.early_stopping, class_weight=keras_class_weighting).history
             self.pretrain_history_last = history.copy()
             self.pretrain_history = self.keep_last_entry(history)
 
@@ -1166,4 +868,3 @@ class GAILPPO(ABRPolicy):
                                      approx_evaluation=behavioural_cloning_evaluation,
                                      approx_trajectory=behavioural_cloning_evaluation_trajectory,
                                      approx_action=approx_action, add_data=add_data)
-

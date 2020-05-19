@@ -15,8 +15,6 @@ from BehaviourCloning.GeneticFeatureEngineering import GeneticFeatureGenerator, 
 MIN_DIFFERENCE_QUALITY = 2
 
 
-#### Maybe also with likelihood
-
 class ABRPolicyLearner(ABRPolicy, ABC):
 
     @abstractmethod
@@ -128,6 +126,12 @@ class ABRPolicyRate(ABRPolicyLearner):
         print('Does not need to be fitted')
 
     def predict_proba(self, prediction_data):
+        """
+        We always return a probability array over quality switches possibility --
+        sets the one by the rate algo choosen to 1
+        :param prediction_data:
+        :return:
+        """
         y_pred = []
         columns_bitrate_future = 'future_chunk_bitrate_switch_'
         columns_bitrate_future = [c for c in list(prediction_data) if columns_bitrate_future in c]
@@ -207,7 +211,7 @@ class ABRPolicyClassifierSimple(ABRPolicyLearner):
         :param max_lookahead:
         :param max_lookback:
         :param classifier:
-        :param rate_correction: DEPCREATED
+        :param rate_correction: DEPRECATED
         """
         super().__init__(abr_name, max_quality_change, deterministic)
         self.max_lookahead = max_lookahead
@@ -223,7 +227,7 @@ class ABRPolicyClassifierSimple(ABRPolicyLearner):
     def rate_correct_prediction(self, observation):
         """
         Predict next quality as rate predicted quality. Could be used as safety fallback feature
-        Depcreated
+        Was Deprecated in the final version
         :param observation:
         :return:
         """
@@ -363,12 +367,12 @@ class ABRPolicyClassifierHandFeatureEngineering(ABRPolicyClassifierSimple):
         :param deterministic:
         :param max_lookahead:
         :param max_lookback:
-        :param classifier:
-        :param estimators:
-        :param feature_complexity:
-        :param rate_correction:
+        :param classifier: What do we use as a classifer (Instance of Decisiontree classifier from sklearn)
+        :param estimators: Future throughput estimators
+        :param feature_complexity: Choose from ['normal', 'complex', 'very complex','very very complex']
+        :param rate_correction: Deprecated
         """
-        AVAIL_COMPLEXITY = ['normal', 'complex', 'very complex','very very complex']
+        AVAIL_COMPLEXITY = ['normal', 'complex', 'very complex', 'very very complex']
         assert feature_complexity in AVAIL_COMPLEXITY, 'feature_complexity has to be in %s' % AVAIL_COMPLEXITY
         super().__init__(abr_name, max_quality_change, deterministic, max_lookahead, max_lookback, classifier,
                          rate_correction)
@@ -381,6 +385,10 @@ class ABRPolicyClassifierHandFeatureEngineering(ABRPolicyClassifierSimple):
                                                np.linspace(0.15, 0.95, 5)]
 
     def copy(self):
+        """
+        Copy the instance
+        :return:
+        """
         tmp_file_name = self.rnd_id + 'tmp_id'
         with open(tmp_file_name, 'wb') as dill_temp:
             dill.dump(self.classifier, dill_temp)
@@ -484,7 +492,8 @@ class ABRPolicyClassifierHandFeatureEngineering(ABRPolicyClassifierSimple):
 
                     feature_names += list(linear_qoe_expected_normalized.flatten())
                     feature_names += list(linear_qoe_expected.flatten())
-                if self.feature_complexity in ['very very complex']:
+                if self.feature_complexity in [
+                    'very very complex']:  ### Didn't show any improvement -- mostly overfitting
                     feature_names += [v + '+_normalized' for v in list(future_byterate_ratio_str.flatten())]
                     feature_names += [v + '+_normalized' for v in list(future_vmaf_ratio_str.flatten())]
 
@@ -533,7 +542,7 @@ class ABRPolicyClassifierHandFeatureEngineering(ABRPolicyClassifierSimple):
                              rebuffer_penality,
                              switching_penality):
         """
-        Calculate linear QoE as in the MPC paper recursevily
+        Calculate linear QoE as in the MPC paper recursively
         :param current_t:
         :param current_buffer:
         :param encoded_mbit:
@@ -633,7 +642,7 @@ class ABRPolicyClassifierHandFeatureEngineering(ABRPolicyClassifierSimple):
                 future_buffer_filling_ratio = np.zeros(future_video_chunk_byterate.shape)
                 future_buffer_filling_ratio[future_video_chunk_byterate != 0] = future_video_chunk_byterate[
                                                                                     future_video_chunk_byterate != 0] / throughput_value
-                if self.feature_complexity in ['complex','very complex','very very complex']:
+                if self.feature_complexity in ['complex', 'very complex', 'very very complex']:
                     # vmaf_filling_ratio = np.zeros(future_video_chunk_vmaf.shape)
                     # vmaf_filling_ratio[future_video_chunk_vmaf != 0] = future_buffer_filling_ratio[
                     #                                                       future_video_chunk_vmaf != 0] / \
@@ -694,8 +703,10 @@ class ABRPolicyClassifierHandFeatureEngineering(ABRPolicyClassifierSimple):
                     feature_arr += list(linear_qoe_expected_normalized)
                     feature_arr += list(linear_qoe_expected)
                 if self.feature_complexity in ['very very complex']:
-                    feature_arr += list((vmaf_filling_ratio / (vmaf_filling_ratio.sum(0,keepdims = True) + 1e-10)).flatten())
-                    feature_arr += list((bitrate_filling_ratio / (vmaf_filling_ratio.sum(0,keepdims = True) + 1e-10)).flatten())
+                    feature_arr += list(
+                        (vmaf_filling_ratio / (vmaf_filling_ratio.sum(0, keepdims=True) + 1e-10)).flatten())
+                    feature_arr += list(
+                        (bitrate_filling_ratio / (vmaf_filling_ratio.sum(0, keepdims=True) + 1e-10)).flatten())
 
                 feature_arr += list(future_download_time_s.flatten())
                 feature_arr += list(future_buffer_filling_ratio.flatten())

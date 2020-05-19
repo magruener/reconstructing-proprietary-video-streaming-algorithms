@@ -1,13 +1,12 @@
 import logging
-from time import time
 
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.keras.backend import clear_session
 
 from ABRPolicies.ABRPolicy import ABRPolicy
-from ABRPolicies.PensieveMultiVideo.multi_a3c import MultiActorNetwork, MultiCriticNetwork
-from ABRPolicies.PensieveSingleVideo.single_a3c import SingleActorNetwork, SinlgeCriticNetwork
+from ABRPolicies.PensieveMultiVideo.multi_a3c import MultiActorNetwork
+from ABRPolicies.PensieveSingleVideo.single_a3c import SingleActorNetwork
 from ABRPolicies.ThroughputEstimator import ThroughputEstimator
 
 LOGGING_LEVEL = logging.DEBUG

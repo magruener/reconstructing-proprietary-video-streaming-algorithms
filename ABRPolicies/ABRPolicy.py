@@ -1,7 +1,6 @@
 import logging
 import string
 from abc import abstractmethod
-from random import choice
 from typing import Dict
 
 import numpy as np
@@ -300,19 +299,24 @@ class ABRPolicy:
         kld_dist = entropy(hist_reference, hist_expert) + entropy(hist_expert, hist_reference)
         policy_history['clustering_score_kl_divergence'] = [kld_dist]
 
-        policy_history['mult_macro_clustering_score'] = [policy_history['macro_f1_score'] * policy_history[
-            'avg_clustering_approx']]
-        policy_history['add_macro_clustering_score'] = [policy_history['macro_f1_score'] + policy_history[
-            'avg_clustering_approx']]
+        policy_history['mult_macro_clustering_score'] = [policy_history['macro_f1_score'][0] * policy_history[
+            'avg_clustering_approx'][0]]
+        policy_history['add_macro_clustering_score'] = [policy_history['macro_f1_score'][0] + policy_history[
+            'avg_clustering_approx'][0]]
         policy_history['f1_macro_clustering_score'] = [(1 + beta ** 2) * policy_history[
-            'mult_macro_clustering_score'] / (beta ** 2 * policy_history['macro_f1_score'] + policy_history[
-            'avg_clustering_approx'])]
+            'mult_macro_clustering_score'][0] / (beta ** 2 * policy_history['macro_f1_score'][0] + policy_history[
+            'avg_clustering_approx'][0])]
 
         return policy_history, approx_evaluation
 
     def randomString(self, stringLength=10):
-        """Generate a random string of fixed length """
-        letters = string.ascii_lowercase
+        np.random.seed()
+        """
+        Generate a random string of fixed length 
+        https://pythonexamples.org/python-generate-random-string-of-specific-length/
+        """
+        letters = [c for c in string.ascii_lowercase]
+        return ''.join(np.random.choice(letters) for _ in range(stringLength))
 
     def likelihood_last_decision(self):
         return self.likelihood_last_decision_val

@@ -38,52 +38,6 @@ N_BINS_DIST = 15
 RANDOM_SEED = 42
 
 
-class KerasGRUDual:
-
-    def __init__(self,
-                 past_measurement_dimensions,
-                 future_measurements_dimensions,
-                 hidden_dim,
-                 output_dim,
-                 drop_prob=0.2):
-        """
-        Keras model considering past and future timeseries separatly. We then fuse them in a last step and add one relu layer
-        :param past_measurement_dimensions:
-        :param future_measurements_dimensions:
-        :param hidden_dim:
-        :param output_dim:
-        :param drop_prob:
-        """
-        super().__init__()
-        state_encoder = GRU(units=hidden_dim,
-                            return_sequences=False, dropout=drop_prob)
-        future_encoder = GRU(units=hidden_dim,
-                             return_sequences=False, dropout=drop_prob)
-        state_t_input = Input(shape=(None, past_measurement_dimensions))
-        state_t1_input = Input(shape=(None, past_measurement_dimensions))
-        state_t_future_input = Input(shape=(None, future_measurements_dimensions))
-        state_t1_future_input = Input(shape=(None, future_measurements_dimensions))
-
-        state_t = state_encoder(state_t_input)
-        state_t_future = future_encoder(state_t_future_input)
-
-        state_t = concatenate([state_t, state_t_future])
-        state_t = Dense(units=hidden_dim, activation="relu")(state_t)
-
-        state_t1 = state_encoder(state_t1_input)
-        state_t1_future = future_encoder(state_t1_future_input)
-
-        state_t1 = concatenate([state_t1, state_t1_future])
-        state_t1 = Dense(units=hidden_dim, activation="relu")(state_t1)
-
-        final_layer = concatenate([state_t, state_t1])
-        final_layer = Dense(units=hidden_dim, activation="relu")(final_layer)
-        final_output = Dense(activation="softmax", units=output_dim)(final_layer)
-        self.model = Model(inputs=[state_t_input, state_t_future_input, state_t1_input, state_t1_future_input],
-                           outputs=final_output)
-        self.model.compile(loss="categorical_crossentropy", optimizer='adam')
-
-
 class KerasPolicy:
 
     def __init__(self,
@@ -115,54 +69,7 @@ class KerasPolicy:
         self.model.compile(loss="categorical_crossentropy", optimizer='adam')
 
 
-class KerasPolicySequence:
-
-    def __init__(self,
-                 past_measurement_dimensions,
-                 future_measurements_dimensions,
-                 hidden_dim,
-                 action_dimension,
-                 drop_prob=0.2):
-        """
-        Predict sequence of qualities
-        :param past_measurement_dimensions:
-        :param future_measurements_dimensions:
-        :param hidden_dim:
-        :param action_dimension:
-        :param drop_prob:
-        """
-        self.encoder_past_input = Input(shape=(None, past_measurement_dimensions))
-        self.encoder_future_input = Input(shape=(None, future_measurements_dimensions))
-        self.decoder_past_input = Input(shape=(None, past_measurement_dimensions))
-        self.decoder_future_input = Input(shape=(None, future_measurements_dimensions))
-        self.encoder_past_GRU = GRU(units=hidden_dim,
-                                    return_sequences=False, dropout=drop_prob)
-        self.encoder_future_GRU = GRU(units=hidden_dim,
-                                      return_sequences=False, dropout=drop_prob)
-        self.encoder_past_GRU_output = self.encoder_past_GRU(self.encoder_past_input)
-        self.encoder_future_GRU_output = self.encoder_future_GRU(self.encoder_future_input)
-        encoder_concatenated = concatenate([self.encoder_past_GRU_output, self.encoder_future_GRU_output])
-        encoder_concatenated = Dense(units=hidden_dim, activation="relu")(encoder_concatenated)
-        self.decoder_past_input_GRU = GRU(units=hidden_dim,
-                                          return_sequences=True, dropout=drop_prob)
-        self.decoder_future_input_GRU = GRU(units=hidden_dim,
-                                            return_sequences=True, dropout=drop_prob)
-        self.decoder_past_GRU_output = self.decoder_past_input_GRU(self.decoder_past_input,
-                                                                   initial_state=encoder_concatenated)
-        self.decoder_future_GRU_output = self.decoder_future_input_GRU(self.decoder_future_input,
-                                                                       initial_state=encoder_concatenated)
-        decoder_encoded = concatenate([self.decoder_past_GRU_output, self.decoder_future_GRU_output])
-        decoder_dense = Dense(activation="softmax", units=action_dimension)
-        decoder_outputs = decoder_dense(decoder_encoded)
-        model = Model([self.encoder_past_input, self.encoder_future_input,
-                       self.decoder_past_input, self.decoder_future_input], decoder_outputs)
-        model.compile(optimizer='rmsprop', loss='categorical_crossentropy',
-                      metrics=['accuracy'])
-        self.model = model
-
-
 class BehavioralCloning(ABRPolicy):
-
 
     def reset(self):
         super().reset()
@@ -217,7 +124,7 @@ class BehavioralCloning(ABRPolicy):
              tqdm(to_imitate_trajectory.trajectory_list, desc='transforming')])
         transformed_observations = pd.DataFrame(transformed_observations,
                                                 columns=self.value_function_learner.extract_features_names())
-        self.impute_NaN_inplace(transformed_observations,'sample weighting')
+        self.impute_NaN_inplace(transformed_observations, 'sample weighting')
         self.anomaly_scorer.fit(transformed_observations)
         ################################
         ### self.anomaly_scorer.score_samples(self,X) Opposite of the anomaly score defined in the original paper.
@@ -366,14 +273,14 @@ class BehavioralCloning(ABRPolicy):
                                                                              expert_trajectory_test,
                                                                              streaming_enviroment,
                                                                              trace_list[test_idx],
-                                                                             video_csv_list[test_idx],add_data=False)
+                                                                             video_csv_list[test_idx], add_data=False)
             if log_steps:
                 with open(os.path.join(logging_folder, 'logging_iteration_%d' % logging_iteration),
                           'wb') as output_file:
                     dill.dump(behavioural_cloning_evaluation, output_file)
 
     def score(self, expert_evaluation, expert_trajectory: Trajectory, streaming_enviroment, trace_list,
-              video_csv_list,add_data = False):
+              video_csv_list, add_data=False):
         """
         Wrapper for the base scoring function
         :param expert_evaluation:
@@ -402,101 +309,7 @@ class BehavioralCloning(ABRPolicy):
                                      expert_action=expert_action,
                                      approx_evaluation=behavioural_cloning_evaluation,
                                      approx_trajectory=behavioural_cloning_evaluation_trajectory,
-                                     approx_action=approx_action,add_data=add_data)
-
-
-class BehavioralCloningDAgger(BehavioralCloning):
-    def __init__(self, classifier: ABRPolicyLearner, validation_split=0.2, cores_avail=1, weight_samples=False,
-                 weight_samples_method='Divergence',iterations = 50):
-        """
-        Inspired by https://www.ri.cmu.edu/pub_files/2011/4/Ross-AISTATS11-NoRegret.pdf
-        1. Act in environment
-        2. Assing scores to observation
-        3. Weigh the actions which have yielded observations which are similiar to the expert data
-        :param classifier:
-        :param validation_split:
-        :param cores_avail:
-        :param weight_samples:
-        :param weight_samples_method:
-        :param iterations:
-        """
-
-        super().__init__(classifier, validation_split, cores_avail, weight_samples, weight_samples_method)
-        self.iterations = iterations
-
-    def clone_from_trajectory(self, expert_evaluation, expert_trajectory: Trajectory, streaming_enviroment, trace_list,
-                              video_csv_list, log_steps=False):
-        # Select the training/validation traces
-        self.policy_history = None
-        trace_list = np.array(trace_list)
-        video_csv_list = np.array(video_csv_list)
-        expert_evaluation = np.array(expert_evaluation)
-        train_idx, test_idx = train_test_split(np.arange(len(expert_evaluation)),
-                                               test_size=self.validation_split, random_state=RANDOM_SEED)
-        trace_video_pair_list = [f.name for f in expert_evaluation[train_idx]]
-        expert_trajectory_train = expert_trajectory.extract_trajectory(trace_video_pair_list=trace_video_pair_list)
-        expert_trajectory_train.convert_list()
-        trace_video_pair_list = [f.name for f in expert_evaluation[test_idx]]
-        self.fit_clustering_scorer(expert_trajectory)
-        ###########
-        if self.weight_samples:
-            self.fit_value_function(to_imitate_evaluation=expert_evaluation[train_idx],
-                                    to_imitate_trajectory=expert_trajectory_train)
-            advantage = []
-            for index in train_idx:
-                advantage += list(self.estimate_advantage_frame(expert_evaluation[index], trace_list[index],
-                                                                video_csv_list[index], streaming_enviroment))
-            advantage = np.array(advantage).flatten()
-            advantage = advantage + np.min(
-                advantage)  # We smooth the estimate so that the low advantages are a bit bolstered
-            assert (advantage < 0).sum() == 0, 'advantage should be non negative everywhere'
-        #### estimate advantage on the training samples
-
-        expert_trajectory_test = expert_trajectory.extract_trajectory(trace_video_pair_list=trace_video_pair_list)
-
-        state_t = np.array([self.classifier.extract_features_observation(state_t) for state_t, _, _ in
-                            tqdm(expert_trajectory_train.trajectory_list, desc='transforming')])
-        state_t = pd.DataFrame(state_t, columns=self.classifier.extract_features_names())
-        self.impute_NaN_inplace(state_t)
-        expert_action = expert_trajectory_train.trajectory_action_t_arr
-        if self.weight_samples:
-            self.classifier.fit(state_t, expert_action.ravel(), sample_weight=advantage)
-        else:
-            self.classifier.fit(state_t, expert_action.ravel())
-        if self.policy_history is None:
-            self.policy_history, behavioural_cloning_evaluation = self.score(expert_evaluation[test_idx],
-                                                                             expert_trajectory_test,
-                                                                             streaming_enviroment,
-                                                                             trace_list[test_idx],
-                                                                             video_csv_list[test_idx], add_data=False)
-        weight_filepaths = []
-        for cloning_iteration in range(self.iterations):
-            behavioural_cloning_trace_generator_testing = TrajectoryVideoStreaming(self, streaming_enviroment,
-                                                                                   trace_list=trace_list,
-                                                                                   video_csv_list=video_csv_list)
-            behavioural_cloning_evaluation, behavioural_cloning_evaluation_trajectory = behavioural_cloning_trace_generator_testing.create_trajectories(
-                random_action_probability=0,cores_avail=1)
-            behavioural_cloning_evaluation_trajectory.convert_list()
-            transformed_observations = self.transform_trajectory(behavioural_cloning_evaluation_trajectory)
-            sample_weights_new = self.clustering_scorer.predict(transformed_observations)
-            state_t_new = np.array([self.classifier.extract_features_observation(state_t) for state_t, _, _ in
-                                tqdm(behavioural_cloning_evaluation_trajectory.trajectory_list, desc='transforming')])
-            state_t_new = np.array(state_t_new[sample_weights_new == 1.])
-            state_t_new = pd.DataFrame(state_t_new, columns=self.classifier.extract_features_names())
-            state_t = state_t.append(state_t_new)
-            action_new = behavioural_cloning_evaluation_trajectory.trajectory_action_t_arr[sample_weights_new == 1.]
-            expert_action = np.array(list(expert_action) + list(action_new))
-            self.classifier.fit(state_t, expert_action.ravel())
-            weight_filepath = self.rnd_id + '_policy_network_iteration_%d.h5' % cloning_iteration
-            with open(weight_filepath, 'wb') as output_file:
-                dill.dump(self.classifier, output_file)
-            weight_filepaths.append(weight_filepath)
-        best_iteration = self.opt_policy_opt_operator(self.policy_history[self.opt_policy_value_name])
-        with open(weight_filepaths[best_iteration], 'rb') as input_file:
-            self.classifier = dill.load(input_file)
-
-
-
+                                     approx_action=approx_action, add_data=add_data)
 
 
 class BehavioralCloningIterative(ABRPolicy):
@@ -675,7 +488,7 @@ class BehavioralCloningIterative(ABRPolicy):
         self.policy_network.model.load_weights(weight_filepath)
 
     def score(self, expert_evaluation, expert_trajectory: Trajectory, streaming_enviroment, trace_list,
-              video_csv_list,add_data = False):
+              video_csv_list, add_data=False):
         expert_trajectory.convert_list()
         behavioural_cloning_trace_generator_testing = TrajectoryVideoStreaming(self, streaming_enviroment,
                                                                                trace_list=trace_list,
@@ -692,264 +505,4 @@ class BehavioralCloningIterative(ABRPolicy):
                                      expert_action=expert_action,
                                      approx_evaluation=behavioural_cloning_evaluation,
                                      approx_trajectory=behavioural_cloning_evaluation_trajectory,
-                                     approx_action=approx_action,add_data=add_data)
-
-
-class BehavioralCloningSequence(ABRPolicy):
-
-    def __init__(self, abr_name, max_quality_change, deterministic, past_measurement_dimensions,
-                 future_measurements_dimensions, cloning_epochs, drop_prob=0.1,
-                 hidden_dim=32, batch_size_cloning=64, validation_split=0.2, cores_avail=1, balanced=False):
-        """
-        Behavioral Cloning for predicting sequences of actions instead of single actions
-        :param abr_name:
-        :param max_quality_change:
-        :param deterministic:
-        :param past_measurement_dimensions:
-        :param future_measurements_dimensions:
-        :param cloning_epochs:
-        :param drop_prob:
-        :param hidden_dim:
-        :param batch_size_cloning:
-        :param validation_split:
-        :param cores_avail:
-        :param balanced:
-        """
-        super().__init__(abr_name, max_quality_change, deterministic)
-        self.cores_avail = cores_avail
-        self.future_measurements_dimensions = future_measurements_dimensions
-        self.validation_split = validation_split
-        self.balanced = balanced
-
-        self.past_measurement_dimensions = past_measurement_dimensions
-        self.n_actions = max_quality_change * 2 + 1
-        self.hidden_dim = hidden_dim
-        self.drop_prob = drop_prob
-        self.policy_network = KerasPolicySequence(past_measurement_dimensions=self.past_measurement_dimensions,
-                                                  future_measurements_dimensions=self.future_measurements_dimensions,
-                                                  hidden_dim=hidden_dim,
-                                                  action_dimension=self.n_actions,
-                                                  drop_prob=drop_prob)
-
-        self.policy_history = None
-        self.batch_size_cloning = batch_size_cloning
-        self.cloning_epochs = cloning_epochs
-        self.trajectory_dummy = Trajectory()
-
-    def copy(self):
-        copy_ = BehavioralCloningSequence(self.abr_name, self.max_quality_change, self.deterministic,
-                                          self.past_measurement_dimensions,
-                                          self.future_measurements_dimensions, self.cloning_epochs, self.drop_prob,
-                                          self.hidden_dim, self.batch_size_cloning, self.validation_split,
-                                          self.cores_avail)
-        tmp_file_name = self.randomString(self.rnd_string_length) + 'tmp_id'
-        self.policy_network.model.save_weights(filepath=tmp_file_name)
-        copy_.policy_network.model.load_weights(tmp_file_name)
-        os.remove(tmp_file_name)
-        return copy_
-
-    def next_quality(self, observation, reward):
-        current_level = observation['current_level'][-1]
-        streaming_enviroment = observation['streaming_environment']
-        observation = self.trajectory_dummy.scale_observation(
-            observation)  # This is important as the learned representation is also scaled
-        state_t = [v for k, v in sorted(
-            observation.items()) if 'streaming_environment' != k and 'future' not in k]
-        state_t = np.array(state_t).T
-        state_t = np.expand_dims(state_t, axis=0)
-
-        state_t_future = [v for k, v in sorted(
-            observation.items()) if 'streaming_environment' != k and 'future' in k]
-        state_t_future = np.array(state_t_future).T
-        state_t_future = np.expand_dims(state_t_future, axis=0)
-        decoder_past_input_dummy = -np.ones(state_t.shape)[:, :1]
-        decoder_future_input = -np.ones(state_t_future.shape)[:, :1]
-
-        action_prob = self.policy_network.model.predict([state_t, state_t_future,
-                                                         decoder_past_input_dummy,
-                                                         decoder_future_input])
-        self.likelihood_last_decision_val = max(action_prob)
-        if self.deterministic:
-            next_quality_switch_idx = np.argmax(action_prob)
-        else:
-            probability = action_prob
-            next_quality_switch_idx = np.random.choice(np.arange(len(probability)), size=1, p=probability)
-        next_quality = np.clip(current_level + self.quality_change_arr[next_quality_switch_idx], a_min=0,
-                               a_max=streaming_enviroment.max_quality_level)
-        return next_quality
-
-    def likelihood_last_decision(self):
-        return self.likelihood_last_decision_val
-
-    def reset(self):
-        pass
-
-    def reset_learning(self):
-        self.policy_history = None
-        self.policy_network = KerasPolicySequence(past_measurement_dimensions=self.past_measurement_dimensions,
-                                                  future_measurements_dimensions=self.future_measurements_dimensions,
-                                                  hidden_dim=self.hidden_dim,
-                                                  action_dimension=self.n_actions,
-                                                  drop_prob=self.drop_prob)
-
-    def calculate_reference_reward(self, expert_evaluation, test_idx):
-        return [frame.reward.mean() for frame in [expert_evaluation[i].streaming_session_evaluation for i in test_idx]]
-
-    def clone_from_trajectory(self, expert_evaluation, expert_trajectory: Trajectory, streaming_enviroment, trace_list,
-                              video_csv_list, log_steps=False):
-        self.reset_learning()
-        self.policy_history = None
-        self.fit_clustering_scorer(expert_trajectory)
-
-        trace_list = np.array(trace_list)
-        video_csv_list = np.array(video_csv_list)
-        expert_evaluation = np.array(expert_evaluation)
-        train_idx, test_idx = train_test_split(np.arange(len(expert_evaluation)),
-                                               test_size=self.validation_split * 2.)
-        test_idx, validation_idx = train_test_split(test_idx,
-                                                    test_size=0.5)
-        trace_video_pair_list = [f.name for f in expert_evaluation[train_idx]]
-        expert_trajectory_train = expert_trajectory.extract_trajectory(trace_video_pair_list=trace_video_pair_list)
-        expert_trajectory_train.convert_list()
-        trace_video_pair_list = [f.name for f in expert_evaluation[test_idx]]
-        expert_trajectory_test = expert_trajectory.extract_trajectory(trace_video_pair_list=trace_video_pair_list)
-        expert_trajectory_test.convert_list()
-        trace_video_pair_list = [f.name for f in expert_evaluation[validation_idx]]
-        expert_trajectory_validation = expert_trajectory.extract_trajectory(trace_video_pair_list=trace_video_pair_list)
-        expert_trajectory_validation.convert_list()
-
-        state_t_training = expert_trajectory_train.trajectory_state_t_arr
-        state_t_future_training = expert_trajectory_train.trajectory_state_t_future
-        action_training = to_categorical(expert_trajectory_train.trajectory_action_t_arr, self.n_actions)
-        shape_state = state_t_training.shape
-        lookahead_horizon = shape_state[1]
-        time_series_training, time_series_future_training, time_series_action_categorical_training = self.create_timeseries(
-            expert_evaluation[train_idx], state_t_training, state_t_future_training, action_training)
-        state_t_training = expert_trajectory_train.trajectory_state_t_arr[:-lookahead_horizon]
-        state_t_future_training = expert_trajectory_train.trajectory_state_t_future[:-lookahead_horizon]
-
-        state_t_testing = expert_trajectory_test.trajectory_state_t_arr
-        state_t_future_testing = expert_trajectory_test.trajectory_state_t_future
-        action_testing = to_categorical(expert_trajectory_test.trajectory_action_t_arr, self.n_actions)
-        time_series_testing, time_series_future_testing, time_series_action_categorical_testing = self.create_timeseries(
-            expert_evaluation[test_idx], state_t_testing, state_t_future_testing, action_testing)
-        state_t_testing = state_t_testing[:-lookahead_horizon]
-        state_t_future_testing = state_t_future_testing[:-lookahead_horizon]
-        validation_data = ([state_t_testing, state_t_future_testing, time_series_testing, time_series_future_testing],
-                           time_series_action_categorical_testing)
-        weight_filepaths = []
-        keras_class_weighting = None
-        if self.balanced:
-            keras_class_weighting = class_weight.compute_class_weight('balanced',
-                                                                      np.unique(action_training.argmax(1)),
-                                                                      action_training.argmax(1))
-
-        for cloning_iteration in tqdm(range(self.cloning_epochs), desc='Cloning Epochs'):
-            history = self.policy_network.model.fit([state_t_training, state_t_future_training,
-                                                     time_series_training,
-                                                     time_series_future_training],
-                                                    time_series_action_categorical_training,
-                                                    validation_data=validation_data, epochs=1,
-                                                    verbose=0, class_weight=keras_class_weighting).history
-            if self.policy_history is None:
-                self.policy_history = history
-            else:
-                for k, v in history.items():
-                    self.policy_history[k] += history[k]
-            scoring_history, behavioural_cloning_evaluation = self.score(expert_evaluation[validation_idx],
-                                                                         expert_trajectory_validation,
-                                                                         streaming_enviroment,
-                                                                         trace_list[validation_idx],
-                                                                         video_csv_list[validation_idx])
-            if log_steps:
-                logging_folder = 'logging_%s' % self.abr_name
-                if not os.path.exists(logging_folder):
-                    os.makedirs(logging_folder)
-                with open(os.path.join(logging_folder, 'logging_iteration_%d' % cloning_iteration),
-                          'wb') as output_file:
-                    dill.dump(behavioural_cloning_evaluation, output_file)
-
-            for k, v in scoring_history.items():
-                if k in self.policy_history:
-                    self.policy_history[k] += scoring_history[k]
-                else:
-                    self.policy_history[k] = scoring_history[k]
-            weight_filepath = self.rnd_id + '_policy_network_iteration_%d.h5' % cloning_iteration
-            self.policy_network.model.save_weights(filepath=weight_filepath)
-            weight_filepaths.append(weight_filepath)
-        best_iteration = self.opt_policy_opt_operator(self.policy_history[self.opt_policy_value_name])
-        self.policy_network.model.load_weights(weight_filepaths[best_iteration])
-        logger.info('Restoring best iteration %d' % best_iteration)
-        for path in weight_filepaths:
-            os.remove(path)
-
-    def save_model(self, weight_filepath):
-        self.policy_network.model.save_weights(filepath=weight_filepath)
-
-    def load_model(self, weight_filepath):
-        self.policy_network.model.load_weights(weight_filepath)
-
-    def score(self, expert_evaluation, expert_trajectory: Trajectory, streaming_enviroment, trace_list,
-              video_csv_list,add_data = False):
-        expert_trajectory.convert_list()
-        behavioural_cloning_trace_generator_testing = TrajectoryVideoStreaming(self, streaming_enviroment,
-                                                                               trace_list=trace_list,
-                                                                               video_csv_list=video_csv_list)
-        state_t_testing = expert_trajectory.trajectory_state_t_arr
-        state_t_future_testing = expert_trajectory.trajectory_state_t_future
-        action_testing = to_categorical(expert_trajectory.trajectory_action_t_arr, num_classes=self.n_actions)
-        time_series_testing, time_series_future_testing, time_series_action_categorical_testing = self.create_timeseries(
-            expert_evaluation, state_t_testing, state_t_future_testing, action_testing)
-        shape_state = state_t_testing.shape
-        lookahead_horizon = shape_state[1]
-        state_t_testing = state_t_testing[:-lookahead_horizon]
-        state_t_future_testing = state_t_future_testing[:-lookahead_horizon]
-
-        approx_action = self.policy_network.model.predict([state_t_testing, state_t_future_testing,
-                                                    time_series_testing,
-                                                    time_series_future_testing]).argmax(-1).flatten()
-        expert_action = time_series_action_categorical_testing.argmax(-1).flatten()
-        behavioural_cloning_evaluation, behavioural_cloning_evaluation_trajectory = behavioural_cloning_trace_generator_testing.create_trajectories(
-            random_action_probability=0, cores_avail=1)
-        return self.score_comparison(expert_evaluation=expert_evaluation,
-                                     expert_trajectory=expert_trajectory,
-                                     expert_action=expert_action,
-                                     approx_evaluation=behavioural_cloning_evaluation,
-                                     approx_trajectory=behavioural_cloning_evaluation_trajectory,
-                                     approx_action=approx_action,add_data=add_data)
-
-    def create_timeseries(self, expert_evaluation, state_t, state_t_future, action_categorical):
-        i_start = 0
-        i_max = 0
-        time_series = []
-        time_series_future = []
-        time_series_action_categorical = []
-        shape_state = state_t.shape
-        lookahead_horizon = shape_state[1]
-        for ev_frame in expert_evaluation:
-            i_max += len(ev_frame.streaming_session_evaluation)
-            while i_start < i_max:
-                if i_start + lookahead_horizon >= len(state_t):  # We loose only a marginal amount of data
-                    break
-                decoded_training_element = state_t[i_start + lookahead_horizon].copy()
-                decoded_future_training_element = state_t_future[i_start: i_start + lookahead_horizon, 0].copy()
-                decoded_action_label_training_element = action_categorical[i_start: i_start + lookahead_horizon]
-                decoded_training_element[0] = -1
-                decoded_future_training_element[0] = -1
-                set_ignore = i_max - (i_start + lookahead_horizon)
-                if set_ignore < 0:
-                    decoded_training_element[set_ignore:] = 0
-                    decoded_future_training_element[set_ignore:] = 0
-                i_start += 1
-                time_series.append(decoded_training_element)
-                time_series_future.append(decoded_future_training_element)
-                time_series_action_categorical.append(decoded_action_label_training_element)
-            i_start = i_max
-
-        time_series = np.array(time_series)
-        time_series_future = np.stack(time_series_future, axis=0)
-        time_series_action_categorical = np.stack(time_series_action_categorical, axis=0)
-        assert len(time_series.shape) == 3, time_series.shape
-        assert len(time_series_future.shape) == 3, time_series_future.shape
-        assert len(time_series_action_categorical.shape) == 3, time_series_action_categorical.shape
-        return time_series, time_series_future, time_series_action_categorical
+                                     approx_action=approx_action, add_data=add_data)

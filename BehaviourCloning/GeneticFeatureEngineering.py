@@ -293,10 +293,10 @@ class GeneticFeatureGenerator(SymbolicTransformer, TransformerMixin):
                  low_memory=False,
                  n_jobs=1,
                  verbose=0,
-                 max_formula_length = 5,
-                 p_point_replace = 0.05,
+                 max_formula_length=5,
+                 p_point_replace=0.05,
                  random_state=None,
-                 time_budget_s = 100):
+                 time_budget_s=100):
         super().__init__(
             population_size=population_size,
             hall_of_fame=hall_of_fame,
@@ -562,11 +562,12 @@ class GeneticFeatureGenerator(SymbolicTransformer, TransformerMixin):
 
             # Reduce, maintaining order across different n_jobs
             population = list(itertools.chain.from_iterable(population))
-            population = [program for program in population if program.length_ <= self.max_formula_length] # We want to impose that in order to keep it interpretable
+            population = [program for program in population if
+                          program.length_ <= self.max_formula_length]  # We want to impose that in order to keep it interpretable
             seen_key = set()
             population_unique = []
-            for p in population :
-                if str(p) not in seen_key :
+            for p in population:
+                if str(p) not in seen_key:
                     population_unique += [p]
                 seen_key.add(str(p))
             population = population_unique
@@ -577,7 +578,7 @@ class GeneticFeatureGenerator(SymbolicTransformer, TransformerMixin):
             modified_features = pd.DataFrame(modified_features, columns=modified_names)
             # -------------------------------------------------------------------------------
             # n_samples,n_features
-            self.tree_estimator.fit(modified_features, y,sample_weight = sample_weight)
+            self.tree_estimator.fit(modified_features, y, sample_weight=sample_weight)
             feature_importance_fitness = self.tree_estimator.feature_importances_
             for idx in range(len(population)):
                 population[idx].raw_fitness_ = feature_importance_fitness[idx]
