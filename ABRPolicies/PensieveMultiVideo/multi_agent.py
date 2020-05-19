@@ -245,7 +245,6 @@ def agent(agent_id, net_params_queue, exp_queue):
 
         mask = net_env.video_masks[net_env.video_idx]
 
-        last_bit_rate = DEFAULT_QUALITY
         bit_rate = DEFAULT_QUALITY
 
         action = bitrate_to_action(bit_rate, mask)
@@ -280,7 +279,6 @@ def agent(agent_id, net_params_queue, exp_queue):
 
             r_batch.append(reward)
 
-            last_bit_rate = bit_rate
             last_action = action
 
             # retrieve previous state
@@ -354,7 +352,6 @@ def agent(agent_id, net_params_queue, exp_queue):
 
             # store the state and action into batches
             if end_of_video:
-                last_bit_rate = DEFAULT_QUALITY
                 bit_rate = DEFAULT_QUALITY  # use the default action here
 
                 action = bitrate_to_action(bit_rate, mask)

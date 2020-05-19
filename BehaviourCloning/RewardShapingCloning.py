@@ -5,10 +5,10 @@ import dill
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.utils import class_weight
-from tensorflow.keras import backend as K, Input, Model
-from tensorflow.keras.layers import GRU, Dense, concatenate
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.utils import to_categorical
+from tensorflow.python.keras import backend as K, Input, Model
+from tensorflow.python.keras.layers import GRU, Dense, concatenate
+from tensorflow.python.keras.optimizers import Adam
+from tensorflow.python.keras.utils import to_categorical
 from tqdm import tqdm
 
 from ABRPolicies.ABRPolicy import ABRPolicy

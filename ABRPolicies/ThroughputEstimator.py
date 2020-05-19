@@ -128,7 +128,7 @@ class TimeEstimator(ThroughputEstimator):
         Consider the last n steps of measurements which happend less than consider_last_t_seconds seconds ago
         .Predict the future bandwidth with the function in predictor_function.
         Robust estimate corrects estimator as in the MPC implementation in https://github.com/hongzimao/pensieve
-        :param consider_last_n_steps:
+        :param consider_last_t_seconds:
         :param predictor_function:
         :param robust_estimate:
         """

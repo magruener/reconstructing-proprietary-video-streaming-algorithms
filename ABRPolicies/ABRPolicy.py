@@ -313,7 +313,6 @@ class ABRPolicy:
     def randomString(self, stringLength=10):
         """Generate a random string of fixed length """
         letters = string.ascii_lowercase
-        return ''.join(choice(letters) for i in range(stringLength))
 
     def likelihood_last_decision(self):
         return self.likelihood_last_decision_val

@@ -16,9 +16,9 @@ import pandas as pd
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import train_test_split
 from sklearn.utils import class_weight
-from tensorflow.keras import Input, Model
-from tensorflow.keras.layers import GRU, concatenate, Dense
-from tensorflow.keras.utils import to_categorical
+from tensorflow.python.keras import Input, Model
+from tensorflow.python.keras.layers import GRU, concatenate, Dense
+from tensorflow.python.keras.utils import to_categorical
 from tqdm import tqdm
 from xgboost import XGBRegressor
 
@@ -426,7 +426,6 @@ class BehavioralCloningDAgger(BehavioralCloning):
 
     def clone_from_trajectory(self, expert_evaluation, expert_trajectory: Trajectory, streaming_enviroment, trace_list,
                               video_csv_list, log_steps=False):
-        logging_iteration = 0
         # Select the training/validation traces
         self.policy_history = None
         trace_list = np.array(trace_list)

@@ -674,7 +674,6 @@ class ABRPolicyClassifierHandFeatureEngineering(ABRPolicyClassifierSimple):
                     # feature_arr += list(rebuffering_projected.flatten())
                     # feature_arr += list(rebuffering_vs_bitrate.flatten())
                 if self.feature_complexity in ['very complex', 'very very complex']:
-                    linear_qoe_expected_list = []
                     summary_function = np.max
                     rebuffer_penality = 4.3
                     switching_penality = 1.

@@ -124,8 +124,6 @@ class Rate(MPC):
         for next_level in quality_choices:
             bitrate_bit = streaming_enviroment.bitrate_match.iloc[streaming_enviroment.video_chunk_counter, next_level]
             bitrate_mbit = 1e-6 * bitrate_bit
-            video_chunk_size_byte = streaming_enviroment.byte_size_match.iloc[
-                streaming_enviroment.video_chunk_counter, next_level]
             if next_level > last_level:
                 future_bandwidth = future_bandwidth * self.upscale_factor  # Used in the Shaka Player
             elif next_level == last_level:

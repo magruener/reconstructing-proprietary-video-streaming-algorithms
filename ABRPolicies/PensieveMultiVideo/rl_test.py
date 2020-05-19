@@ -73,10 +73,6 @@ def main():
                                             state_dim=[S_INFO, S_LEN], action_dim=A_DIM,
                                             learning_rate=ACTOR_LR_RATE)
 
-        critic = multi_a3c.MultiCriticNetwork(sess,
-                                              state_dim=[S_INFO, S_LEN],
-                                              learning_rate=CRITIC_LR_RATE)
-
         sess.run(tf.global_variables_initializer())
         saver = tf.train.Saver()  # save neural net parameters
 
@@ -87,7 +83,6 @@ def main():
 
         time_stamp = 0
 
-        last_bit_rate = DEFAULT_QUALITY
         bit_rate = DEFAULT_QUALITY
 
         action = bitrate_to_action(bit_rate, net_env.video_masks[net_env.video_idx])
@@ -116,7 +111,6 @@ def main():
                      - SMOOTH_PENALTY * np.abs(VIDEO_BIT_RATE[action] -
                                                VIDEO_BIT_RATE[last_action]) / M_IN_K
 
-            last_bit_rate = bit_rate
             last_action = action
 
             # log time_stamp, bit_rate, buffer_size, reward
@@ -174,7 +168,6 @@ def main():
 
                 del s_batch[:]
 
-                last_bit_rate = DEFAULT_QUALITY
                 bit_rate = DEFAULT_QUALITY  # use the default action here
 
                 action = bitrate_to_action(bit_rate, mask)

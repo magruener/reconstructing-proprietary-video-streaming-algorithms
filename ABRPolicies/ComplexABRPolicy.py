@@ -3,7 +3,7 @@ from time import time
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.backend import clear_session
+from tensorflow.python.keras.backend import clear_session
 
 from ABRPolicies.ABRPolicy import ABRPolicy
 from ABRPolicies.PensieveMultiVideo.multi_a3c import MultiActorNetwork, MultiCriticNetwork
@@ -52,8 +52,6 @@ class PensieveMultiNN(ABRPolicy):
         self.actor = MultiActorNetwork(sess, state_dim=[self.info_dimensions, self.lookback_frames],
                                        action_dim=self.action_dimension,
                                        learning_rate=actor_learning_rate)
-        critic = MultiCriticNetwork(sess, state_dim=[self.info_dimensions, self.lookback_frames],
-                                    learning_rate=critic_learning_rate)
         sess.run(tf.global_variables_initializer())
         saver = tf.train.Saver()  # save neural net parameters
         logger.info('Loading Model from %s' % nn_model_path)
@@ -190,10 +188,6 @@ class PensieveNN(ABRPolicy):
                                         action_dim=self.action_dimension,
                                         learning_rate=actor_learning_rate)
 
-        critic = SinlgeCriticNetwork(sess,
-                                     state_dim=[self.info_dimensions, self.lookback_frames],
-                                     learning_rate=critic_learning_rate)
-
         sess.run(tf.global_variables_initializer())
         saver = tf.train.Saver()  # save neural net parameters
         logger.info('Loading Model from %s' % nn_model_path)
@@ -327,7 +321,6 @@ class MPC(ABRPolicy):
         tput_estimate = (8e-6 * video_chunk_size_byte) / download_time_s
         self.throughput_predictor.add_sample(tput_estimate=tput_estimate, timestamp_s=timestamp_s)
         future_bandwidth = self.throughput_predictor.predict_future_bandwidth()
-        start_time = time()
         value_next_quality, next_quality, probability_next_quality = self.solve_lookahead(streaming_enviroment,
                                                                                           self.lookahead,
                                                                                           video_chunk_counter=streaming_enviroment.video_chunk_counter,
