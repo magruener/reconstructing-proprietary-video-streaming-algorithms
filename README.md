@@ -32,7 +32,7 @@ the ATC2020 paper "Reconstructing Proprietary Video Streaming Algorithms."
 +-- Experiments
 |   +-- SampleExperiment.py # Example experiment
 +-- SimulationEnviroment
-|   +-- Rewards.py # Contains rewards that can be used in the environment
+|   +-- Rewards.py # Contains rewards functions
 |   +-- SimulatorEnviroment.py # Simulator
 +-- Transformer
 |   +-- LegacyTransformer.py # Contains transformers which map raw measurements to ParsedResults
@@ -42,7 +42,7 @@ the ATC2020 paper "Reconstructing Proprietary Video Streaming Algorithms."
 |   +-- tree_mapper.py #Small tool to map the trees generated in this code to a more readable version
 ```
 ### Generating FeedbackResults
-The measurements have been generated with the code found in https://github.com/magruener/understanding-video-streaming-in-the-wild
+You can regenerate the measurements with the code found in https://github.com/magruener/understanding-video-streaming-in-the-wild.
 ### Tree Interpretation
 We have made the best trees we were able to generate for a given leaf number restriction available
 in the folder trees_visualised. Here we'll provide a short explanation for the composite features
@@ -54,10 +54,10 @@ used in the trees. If you want to adapt the code to use your features, have a lo
  * (Buffer Fill / Download Time (s)) x Mbit Gain: For each second downloaded how many seconds do we 
  loose/gain weighted by the rate we're obtaining
  * (Buffer Fill / Download Time (s)) x VMAF Gain: For each second downloaded how many seconds do we 
- loose/gain weighted by the VMAF we're obtaining
- * Linear QoE Normalised: QoE as in the MPC paper difference of QoE achieved by this action and the 
+ loose/gain weighted by the VMAF score we're obtaining
+ * Linear QoE Normalised: QoE as in the MPC paper, value calculates as the difference of QoE achieved by this action and the 
   minimum QoE achievable. 
- * Linear QoE: QoE as in the MPC paper raw
+ * Linear QoE: QoE as in the MPC paper
  * Buffer Drainage (s): How long did we have to wait for there to be enough space in the buffer so that we can download
  a new chunk
 ### Prerequisites
