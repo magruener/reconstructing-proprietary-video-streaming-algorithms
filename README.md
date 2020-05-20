@@ -35,7 +35,8 @@ the ATC2020 paper "Reconstructing Proprietary Video Streaming Algorithms."
 |   |   |   |   +-- trajectory_list # trajectory of different runs
 |   +-- Traces # complete trace collection
 |   +-- trees_generated_evaluation # best trees for each provider with corresponding configuration
-|   +-- trees_visualised # visualisation for all trees with a sufficiently good enough score
+|   +-- trees_visualised # visualisation for 10 best trees for each provider
+|   |   +-- achieved_score_trees.csv # Contains scoring for trees
 |   +-- Video_Info # video information for different providers
 |   |   +-- Arte_Online_Complex_Manual_Feature_Engineering_BC_Full__10_leaf_nodes.png ### Provider _ FeatureComplexity _ Method _ Number of leafs
 |   +-- VideoSelectionList # videos selected from different providers
