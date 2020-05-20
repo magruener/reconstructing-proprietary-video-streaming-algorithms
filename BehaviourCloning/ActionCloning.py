@@ -506,3 +506,92 @@ class BehavioralCloningIterative(ABRPolicy):
                                      approx_evaluation=behavioural_cloning_evaluation,
                                      approx_trajectory=behavioural_cloning_evaluation_trajectory,
                                      approx_action=approx_action, add_data=add_data)
+
+
+class BehavioralCloningDAgger(BehavioralCloning):
+    def __init__(self, classifier: ABRPolicyLearner, validation_split=0.2, cores_avail=1, weight_samples=False,
+                 weight_samples_method='Divergence',iterations = 50):
+        """
+        Self play and weigh the samples by similarity
+        :param classifier:
+        :param validation_split:
+        :param cores_avail:
+        :param weight_samples:
+        :param weight_samples_method:
+        :param iterations:
+        """
+
+        super().__init__(classifier, validation_split, cores_avail, weight_samples, weight_samples_method)
+        self.iterations = iterations
+
+    def clone_from_trajectory(self, expert_evaluation, expert_trajectory: Trajectory, streaming_enviroment, trace_list,
+                              video_csv_list, log_steps=False):
+        logging_iteration = 0
+        # Select the training/validation traces
+        self.policy_history = None
+        trace_list = np.array(trace_list)
+        video_csv_list = np.array(video_csv_list)
+        expert_evaluation = np.array(expert_evaluation)
+        train_idx, test_idx = train_test_split(np.arange(len(expert_evaluation)),
+                                               test_size=self.validation_split, random_state=RANDOM_SEED)
+        trace_video_pair_list = [f.name for f in expert_evaluation[train_idx]]
+        expert_trajectory_train = expert_trajectory.extract_trajectory(trace_video_pair_list=trace_video_pair_list)
+        expert_trajectory_train.convert_list()
+        trace_video_pair_list = [f.name for f in expert_evaluation[test_idx]]
+        self.fit_clustering_scorer(expert_trajectory)
+        ###########
+        if self.weight_samples:
+            self.fit_value_function(to_imitate_evaluation=expert_evaluation[train_idx],
+                                    to_imitate_trajectory=expert_trajectory_train)
+            advantage = []
+            for index in train_idx:
+                advantage += list(self.estimate_advantage_frame(expert_evaluation[index], trace_list[index],
+                                                                video_csv_list[index], streaming_enviroment))
+            advantage = np.array(advantage).flatten()
+            advantage = advantage + np.min(
+                advantage)  # We smooth the estimate so that the low advantages are a bit bolstered
+            assert (advantage < 0).sum() == 0, 'advantage should be non negative everywhere'
+        #### estimate advantage on the training samples
+
+        expert_trajectory_test = expert_trajectory.extract_trajectory(trace_video_pair_list=trace_video_pair_list)
+
+        state_t = np.array([self.classifier.extract_features_observation(state_t) for state_t, _, _ in
+                            tqdm(expert_trajectory_train.trajectory_list, desc='transforming')])
+        state_t = pd.DataFrame(state_t, columns=self.classifier.extract_features_names())
+        self.impute_NaN_inplace(state_t)
+        expert_action = expert_trajectory_train.trajectory_action_t_arr
+        if self.weight_samples:
+            self.classifier.fit(state_t, expert_action.ravel(), sample_weight=advantage)
+        else:
+            self.classifier.fit(state_t, expert_action.ravel())
+        if self.policy_history is None:
+            self.policy_history, behavioural_cloning_evaluation = self.score(expert_evaluation[test_idx],
+                                                                             expert_trajectory_test,
+                                                                             streaming_enviroment,
+                                                                             trace_list[test_idx],
+                                                                             video_csv_list[test_idx], add_data=False)
+        weight_filepaths = []
+        for cloning_iteration in range(self.iterations):
+            behavioural_cloning_trace_generator_testing = TrajectoryVideoStreaming(self, streaming_enviroment,
+                                                                                   trace_list=trace_list,
+                                                                                   video_csv_list=video_csv_list)
+            behavioural_cloning_evaluation, behavioural_cloning_evaluation_trajectory = behavioural_cloning_trace_generator_testing.create_trajectories(
+                random_action_probability=0,cores_avail=1)
+            behavioural_cloning_evaluation_trajectory.convert_list()
+            transformed_observations = self.transform_trajectory(behavioural_cloning_evaluation_trajectory)
+            sample_weights_new = self.clustering_scorer.predict(transformed_observations)
+            state_t_new = np.array([self.classifier.extract_features_observation(state_t) for state_t, _, _ in
+                                tqdm(behavioural_cloning_evaluation_trajectory.trajectory_list, desc='transforming')])
+            state_t_new = np.array(state_t_new[sample_weights_new == 1.])
+            state_t_new = pd.DataFrame(state_t_new, columns=self.classifier.extract_features_names())
+            state_t = state_t.append(state_t_new)
+            action_new = behavioural_cloning_evaluation_trajectory.trajectory_action_t_arr[sample_weights_new == 1.]
+            expert_action = np.array(list(expert_action) + list(action_new))
+            self.classifier.fit(state_t, expert_action.ravel())
+            weight_filepath = self.rnd_id + '_policy_network_iteration_%d.h5' % cloning_iteration
+            with open(weight_filepath, 'wb') as output_file:
+                dill.dump(self.classifier, output_file)
+            weight_filepaths.append(weight_filepath)
+        best_iteration = self.opt_policy_opt_operator(self.policy_history[self.opt_policy_value_name])
+        with open(weight_filepaths[best_iteration], 'rb') as input_file:
+            self.classifier = dill.load(input_file)
