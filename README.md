@@ -25,11 +25,8 @@ the ATC2020 paper "Reconstructing Proprietary Video Streaming Algorithms."
 |   +-- FeedbackResults # original measurements
 |   |   +-- Arte # Provider
 |   |   +-- video_051493-028-A_file_id_report.2011-01-06_0749CET.log_Norway # Video_Trace
-|   |   |   +-- evaluation_dataframe.csv Scoring of the run# 
-|   |   |   +-- inorder_dataframe.csv # Parsed chunk requests
 |   |   |   +-- local_client_state_logger.csv # Logging of the html5 states
 |   |   |   +-- raw_dataframe.csv # Requests from raw_har_file.json
-|   |   |   +-- raw_har_file.json # All requests logged from raw_har_file.json
 |   |   |   +-- throttle_logging.tc # Emulated Bandwidth over time
 |   +-- ParsedResults # parsed original measurements into testing environment
 |   |   +-- Arte # Provider

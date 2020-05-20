@@ -126,9 +126,6 @@ if __name__ == "__main__":
                 if len(os.listdir(folder)) < 3:
                     #### Experiment has not fully been concluded
                     continue
-                if 'raw_har_file.json' not in os.listdir(folder):
-                    #### Experiment has not fully been concluded
-                    continue
                 if 'raw_dataframe.csv' not in os.listdir(folder):
                     #### Experiment has not fully been concluded
                     continue
