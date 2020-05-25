@@ -1,23 +1,6 @@
 import argparse
-import random
-import matplotlib.pyplot as plt
-from threading import Timer
-import os
-import sys
-import time
-import selenium
 import subprocess
-import signal
-import argparse
-from selenium import webdriver
-from pyvirtualdisplay import Display
-from selenium.webdriver.chrome.options import Options
-from time import sleep
-import re
-import httplib
-import urllib
-import requests
-import psutil
+import time
 
 #parse arguments
 parser = argparse.ArgumentParser()

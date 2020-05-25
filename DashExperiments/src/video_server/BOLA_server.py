@@ -3,21 +3,14 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import socketserver
 
-import base64
-import urllib
-import requests
 import sys
 import os
 import logging
 import json
-import random
 
 import argparse
-from collections import deque
 import numpy as np
-import time
 import datetime
 
 

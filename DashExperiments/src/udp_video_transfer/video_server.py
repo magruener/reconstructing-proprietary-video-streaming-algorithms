@@ -1,19 +1,15 @@
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from socket import *
 import requests
 import sys
 import os
 import time
 import hashlib
-import math
 import multiprocessing
-from ctypes import c_char_p, c_char
 import math
 import random
 import argparse
 import threading
 import datetime
-import numpy
 import logging
 
 VIDEO_SERVER_HTTP_PORT = 9000

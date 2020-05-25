@@ -4,12 +4,20 @@
 #   arguments:
 #   @abr_alg, @time, @server_address, @experiment_id
 
-import os, sys, time, selenium, subprocess, signal, argparse, re, httplib, urllib, requests, psutil, traceback
-from selenium import webdriver
-from pyvirtualdisplay import Display
-from selenium.webdriver.chrome.options import Options
-from time import sleep
+import argparse
 import logging
+import os
+import psutil
+import signal
+import subprocess
+import sys
+import time
+import traceback
+from time import sleep
+
+from pyvirtualdisplay import Display
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 ABR_SERVER_PORT_OFFSET = 6000
 

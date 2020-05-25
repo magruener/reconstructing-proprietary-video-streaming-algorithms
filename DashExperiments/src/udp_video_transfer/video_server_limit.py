@@ -1,4 +1,3 @@
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from socket import *
 import requests
 import sys

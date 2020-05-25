@@ -1,7 +1,5 @@
-from socket import *
-import time
 import os
-import sys
+from socket import *
 
 BASE_PATH = '/var/www/html/websites'
 os.system('sudo fuser -k -n tcp 5601')

@@ -6,11 +6,12 @@
 #
 # published under MIT license :) do what you want.
 #
-#20170714 shyft ADDED python 2.7 and 3.x compatibility and generic config
-from __future__ import print_function 
-import requests, re, time, random 
-from socket import *
-import argparse
+# 20170714 shyft ADDED python 2.7 and 3.x compatibility and generic config
+from __future__ import print_function
+
+import random
+import requests
+import time
 
 try:
 	import config

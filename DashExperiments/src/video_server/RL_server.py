@@ -3,11 +3,7 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import socketserver
-import traceback
 
-import base64
-import urllib
 import sys
 import os
 import json
@@ -17,7 +13,6 @@ import logging
 import argparse
 import numpy as np
 import tensorflow as tf
-import time
 import a3c
 import datetime
 

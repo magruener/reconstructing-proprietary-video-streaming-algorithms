@@ -1,13 +1,12 @@
+import argparse
+import hashlib
+import logging
+import os
+import sys
+import time
+import traceback
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socket import *
-import sys
-import select
-import os
-import logging
-import hashlib
-import time
-import argparse
-import traceback
 
 num_retransmissions = 0 # for statistical purposes only
 
