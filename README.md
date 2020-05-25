@@ -1,7 +1,7 @@
 # Understanding video streaming algorithms in the wild
 
 In this repo, you'll find all the data to recreate the results shown in 
-the ATC2020 paper "Reconstructing Proprietary Video Streaming Algorithms."
+the ATC2020 paper "reconstructing proprietary video streaming algorithms."
 
 ### Folder Structure
 ```
@@ -27,7 +27,7 @@ the ATC2020 paper "Reconstructing Proprietary Video Streaming Algorithms."
 |   |   +-- video_051493-028-A_file_id_report.2011-01-06_0749CET.log_Norway # Video_Trace
 |   |   |   +-- local_client_state_logger.csv # Logging of the html5 states
 |   |   |   +-- raw_dataframe.csv # Video chunk requests with timing
-|   |   |   +-- throttle_logging.tc # Emulated Bandwidth over time
+|   |   |   +-- throttle_logging.tc # Emulated bandwidth over time
 |   +-- ParsedResults # parsed original measurements into testing environment
 |   |   +-- Arte # Provider
 |   |   |   +-- Online # Type of Algorithm
@@ -53,17 +53,18 @@ the ATC2020 paper "Reconstructing Proprietary Video Streaming Algorithms."
 |   +-- tree_mapper.py #Small tool to map the trees generated in this code to a more readable version
 ```
 ### Trace Format
-Traces are provided in Data/Traces. Each line in the file contains 2 numbers, (time, bandwidth), 
+Traces are provided in Data/Traces. Each line in the file contains 2 numbers (time, bandwidth), 
 where time is in seconds from the start of the script and the bandwidth in Mbps.
 ### Running the real world DASH experiments
-See DashExperiments/src/video_server/zdf_tree_server.py to see how to add your own tree to the real world 
+Look at [zdf_tree_server.py](DashExperiments/src/video_server/zdf_tree_server.py) to see how to add your tree to the real world 
 evaluation for the video used in [Pensieve](https://github.com/hongzimao/pensieve)
 ### Generating FeedbackResults
-You can regenerate the measurements with the code found in https://github.com/magruener/understanding-video-streaming-in-the-wild.
+You can regenerate the measurements with the code found in the repository for [Understanding video streaming in the wild](
+https://github.com/magruener/understanding-video-streaming-in-the-wild).
 ### Tree Interpretation
 We have made the best trees we were able to generate for a given leaf number restriction available
 in the folder trees_visualised. Here we'll provide a short explanation for the composite features
-used in the trees. If you want to adapt the code to use your features, have a look at MLABRPolicy.py
+used in the trees. If you want to adapt the code to use your features, have a look at [MLABRPolicy.py](BehaviourCloning/MLABRPolicy.py)
  * Lookahead: How far do we plan. (Only if applicable)
  * Lookback: How many past values do we consider. Depending on the features the 
  lookback can also pertain to just a specific value
@@ -77,12 +78,12 @@ used in the trees. If you want to adapt the code to use your features, have a lo
  * Linear QoE: QoE as in the MPC paper
  * Buffer Drainage (s): How long did we have to wait for there to be enough space in the buffer so that we can download
  a new chunk
-### Incorporating your own features
-You can manipulate the file MLABRPolicy.py . Be sure to modify the method which
+### Incorporating your features
+You can manipulate the file [MLABRPolicy.py](BehaviourCloning/MLABRPolicy.py). Be sure to modify the method which
 * modifies the feature names
 * generates the values
 * calculates the number of features
-* Utility/tree_mapper.py if you want to parse the tree after learning
+* [tree_mapper.py](Utility/tree_mapper.py) if you want to parse the tree after learning
 ### Prerequisites
 The scripts were tested and developed for Python 3.7. 
 * Install the python packages needed via requirements.txt
