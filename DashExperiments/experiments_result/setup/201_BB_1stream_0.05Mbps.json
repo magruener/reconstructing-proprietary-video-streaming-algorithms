@@ -1,1 +1,0 @@
-{"test_id": "201_BB_1stream_0.05Mbps", "comment": "Gamze wo controller with BB", "trace": "2.2Mbps", "video": "testVideo", "repeat_n": "1", "jobs": [{"name": "Pensieve", "abr": "RL", "quic": "false", "udp": "false", "transport": "cubic", "start": "0", "duration": "200", "server_module": "./src/video_server/rl_server_no_training.py"}]}

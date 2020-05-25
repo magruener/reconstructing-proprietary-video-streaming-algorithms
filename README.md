@@ -52,6 +52,12 @@ the ATC2020 paper "Reconstructing Proprietary Video Streaming Algorithms."
 +-- Utility
 |   +-- tree_mapper.py #Small tool to map the trees generated in this code to a more readable version
 ```
+### Trace Format
+Traces are provided in Data/Traces. Each line in the file contains 2 numbers, (time, bandwidth), 
+where time is in seconds from the start of the script and the bandwidth in Mbps.
+### Running the real world DASH experiments
+See DashExperiments/src/video_server/zdf_tree_server.py to see how to add your own tree to the real world 
+evaluation for the video used in [Pensieve](https://github.com/hongzimao/pensieve)
 ### Generating FeedbackResults
 You can regenerate the measurements with the code found in https://github.com/magruener/understanding-video-streaming-in-the-wild.
 ### Tree Interpretation
@@ -71,6 +77,12 @@ used in the trees. If you want to adapt the code to use your features, have a lo
  * Linear QoE: QoE as in the MPC paper
  * Buffer Drainage (s): How long did we have to wait for there to be enough space in the buffer so that we can download
  a new chunk
+### Incorporating your own features
+You can manipulate the file MLABRPolicy.py . Be sure to modify the method which
+* modifies the feature names
+* generates the values
+* calculates the number of features
+* Utility/tree_mapper.py if you want to parse the tree after learning
 ### Prerequisites
 The scripts were tested and developed for Python 3.7. 
 * Install the python packages needed via requirements.txt

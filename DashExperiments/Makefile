@@ -12,10 +12,11 @@ testcases_path = testcases
 results_path = results
 server_path = src/video_server
 
+# Add the trace path
 traces_path = traces_ATC
 traces = $(sort $(notdir $(wildcard $(traces_path)/*)))
 
-abrs = RB BB BOLA robustMPC robustMPC_three RL robustmpc_tree arte_tree fandom_tree twitch_tree tubitv_tree rl_tree robustmpc_complex_tree rl_complex_tree zdf_tree xvideos_tree srf_tree robustmpc_raw_tree robustmpc_automated_tree
+abrs = RB BB BOLA zdf_tree
 
 abrs_figures_validation = robustmpc_tree robustmpc_raw_tree robustmpc_complex_tree robustmpc_automated_tree robustMPC_three # rl_tree  rl_complex_tree RL
 abrs_figures_comparison = RB BB BOLA robustMPC RL arte_tree fandom_tree twitch_tree tubitv_tree zdf_tree xvideos_tree srf_tree
