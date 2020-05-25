@@ -85,7 +85,7 @@ You can manipulate the file [MLABRPolicy.py](BehaviourCloning/MLABRPolicy.py). B
 * calculates the number of features
 * [tree_mapper.py](Utility/tree_mapper.py) if you want to parse the tree after learning
 ### Prerequisites
-The scripts were tested and developed for Python 3.7. 
+The scripts were tested and developed for Python 3.7 under Ubuntu. 
 * Install the python packages needed via requirements.txt
 
 ### Example

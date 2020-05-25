@@ -13,7 +13,7 @@ results_path = results
 server_path = src/video_server
 
 # Add the trace path
-traces_path = traces_ATC
+traces_path = ../Data/Traces
 traces = $(sort $(notdir $(wildcard $(traces_path)/*)))
 
 abrs = RB BB BOLA zdf_tree
