@@ -94,6 +94,7 @@ You can find an example experiment under Experiments
 
 * **Maximilian Grüner** - [ETH Zürich](mailto:mgruener@ethz.ch)
 * **Melissa Licciardello** - [ETH Zürich](mailto:melissa.licciardello@inf.ethz.ch)
+* **Ankit Singla - [ETH Zürich](mailto:ankit.singla@inf.ethz.ch)
 
 
 ## License
