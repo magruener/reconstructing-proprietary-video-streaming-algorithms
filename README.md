@@ -1,7 +1,7 @@
 # Understanding video streaming algorithms in the wild
 
 In this repo, you'll find all the data to recreate the results shown in 
-the ATC2020 paper "reconstructing proprietary video streaming algorithms."
+the ATC2020 paper "Reconstructing proprietary video streaming algorithms."
 
 ### Folder Structure
 ```
